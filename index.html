@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARTAS SILEN - Fase 3</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+</head>
+<body>
+
+    <div id="app-container">
+        <header class="main-header">
+            <h1 style="font-family: Arial, Helvetica, sans-serif;">CARTAS <span style="color: red;" >SILEN</span></h1>
+            <div id="auth-section">
+                <button id="login-btn" class="btn-control btn-primary">Iniciar Sesión con Google</button>
+                <div id="user-info" class="user-info-container hidden">
+                    <img id="user-pic" src="" alt="Foto de perfil">
+                    <span id="user-name"></span>
+                    <button id="logout-btn" class="btn-control">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="lobby-view" class="view hidden">
+                <h2>Lobby Multijugador</h2>
+                <div class="lobby-controls">
+                    <button id="deck-builder-btn" class="btn-control btn-primary">Constructor de Barajas</button>
+                    <button id="create-game-btn" class="btn-control btn-ia">Crear Nueva Partida</button>
+                    <div class="join-game-section">
+                        <input type="text" id="join-game-input" placeholder="Pegar código de partida...">
+                        <button id="join-game-btn" class="btn-control btn-save">Unirse a Partida</button>
+                    </div>
+                </div>
+                 </div>
+
+            <div id="deck-builder-view" class="view hidden">
+                <div class="deck-builder-header">
+                    <h2>Constructor de Barajas</h2>
+                    <div>
+                        <button id="back-to-lobby-btn" class="btn-control">Volver al Lobby</button>
+                        <button id="clear-deck-btn" class="btn-control btn-ia">Vaciar Baraja</button>
+                        <button id="save-deck-btn" class="btn-control btn-save">Guardar Baraja</button>
+                    </div>
+                </div>
+                <div class="deck-builder-main">
+                    <div class="card-collection-panel">
+                        <h3>Colección de Cartas (<span id="collection-card-count">0</span>)</h3>
+                        <div id="card-collection-list" class="card-list"></div>
+                    </div>
+                    <div class="current-deck-panel">
+                        <h3>Tu Baraja (<span id="deck-card-count">0</span>/40)</h3>
+                        <div id="current-deck-list" class="card-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-view" class="view hidden">
+                <div class="game-board">
+                    <!-- Zona del Oponente -->
+                    <div class="player-zone opponent-zone">
+                        <div class="player-stats">
+                            <div id="opponent-name">Oponente</div>
+                            <div>🏆 Puntos: <span id="opponent-score">0</span></div>
+                            <div>⚡ Unidades: <span id="opponent-units">0</span></div>
+                            <div id="opponent-hand-counter">Cartas en mano: 0</div>
+                        </div>
+                        <div class="player-field" id="opponent-field"></div>
+                        <div class="player-hand" id="opponent-hand" style="display: none;"></div> <!-- Se mantiene por lógica, pero no es visible -->
+                    </div>
+                    
+                    <!-- Zona del Jugador (Campo) -->
+                    <div class="player-zone local-player-zone">
+                        <div class="player-field" id="local-player-field"></div>
+                        <div class="player-stats">
+                            <div id="local-player-name">Tú</div>
+                            <div>🏆 Puntos: <span id="local-player-score">0</span></div>
+                            <div>⚡ Unidades: <span id="local-player-units">0</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Mano del Jugador (Fuera del tablero) -->
+                <div class="player-hand" id="local-player-hand"></div>
+
+                 <div id="game-status" class="game-status-bar">Esperando jugadores...</div>
+                 <div id="game-actions" class="game-actions-bar hidden">
+                    <button id="end-turn-btn" class="btn-control">Terminar Turno</button>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="game-code-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Partida Creada</h3>
+            <p>Comparte este código con tu oponente:</p>
+            <input type="text" id="game-code-display" readonly>
+            <button id="copy-code-btn" class="btn-control">Copiar Código</button>
+            <p class="info-text">Esperando a que se una un oponente...</p>
+        </div>
+    </div>
+    
+    <!-- Modal para acciones de carta -->
+    <div id="card-action-modal" class="modal-overlay hidden">
+        <div id="card-action-content" class="modal-content">
+            <h3 id="card-action-title"></h3>
+            <div id="card-action-buttons"></div>
+            <button id="card-action-cancel" class="btn-control">Cancelar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        
+ // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAfK_AOq-Pc2bzgXEzIEZ1ESWvnhMJUvwI",
+  authDomain: "enraya-51670.firebaseapp.com",
+  databaseURL: "https://enraya-51670-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "enraya-51670",
+  storageBucket: "enraya-51670.firebasestorage.app",
+  messagingSenderId: "103343380727",
+  appId: "1:103343380727:web:b2fa02aee03c9506915bf2",
+  measurementId: "G-2G31LLJY1T"
+};
+
+        const app = initializeApp(firebaseConfig);
+        
+        window.firebase = {
+            app: app,
+            auth: getAuth(app),
+            db: getFirestore(app)
+        };
+    </script>
+    
+    <script type="module" src="main.js"></script>
+    <script type="module" src="game-logic.js"></script>
+</body>
+</html>
