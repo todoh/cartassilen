@@ -68,27 +68,44 @@ function playCardFromHand(state, playerKey, cardId, cardData) {
     const card = cardData.get(cardId);
     const player = state.players[playerKey];
 
-    if (player.unidades < card.coste) return state; // No hay suficientes unidades
+    if (player.unidades < card.coste) { return state; } // No hay suficientes unidades
 
     const cardIndex = state.hands[playerKey].indexOf(cardId);
-    if (cardIndex === -1) return state; // La carta no está en la mano
+    if (cardIndex === -1) { return state; } // La carta no está en la mano
 
     player.unidades -= card.coste;
     state.hands[playerKey].splice(cardIndex, 1);
     
-    const newInstance = {
-        id: cardId,
-        instanceId: `inst_${Date.now()}_${Math.random()}`,
-        tapped: true, // Las cartas entran giradas
-        unidadesAlmacenadas: 0,
-        objetosEquipados: []
-    };
-    state.fields[playerKey].push(newInstance);
-
-    // Lógica para cartas de tipo 'ACCIÓN' que van al descarte
     if (card.tipo === 'ACCION') {
-        // Implementar cementerio si se desea
-        state.fields[playerKey] = state.fields[playerKey].filter(c => c.instanceId !== newInstance.instanceId);
+        // Es una acción, se ejecuta inmediatamente y se descarta
+        const match = card.texto.match(/([A-Z]+)\((\d+)\)/);
+        if (match) {
+            const ability = match[1];
+            // El efecto de la acción usa el 'poder' de la carta
+            switch (ability) {
+                case 'GENERAR':
+                case 'ACUMULAR':
+                    player.unidades += card.poder;
+                    break;
+                case 'GANAR':
+                    player.puntos += card.poder;
+                    break;
+                case 'ATACAR':
+                    // La lógica de ATACAR aquí se interpreta como ganar puntos directamente
+                    player.puntos += card.poder;
+                    break;
+            }
+        }
+    } else {
+        // Es un personaje o sitio, se coloca en el campo
+        const newInstance = {
+            id: cardId,
+            instanceId: `inst_${Date.now()}_${Math.random()}`,
+            tapped: true, // Las cartas entran giradas
+            unidadesAlmacenadas: 0,
+            objetosEquipados: []
+        };
+        state.fields[playerKey].push(newInstance);
     }
 
     return state;
