@@ -246,3 +246,28 @@ body.its-my-turn {
     background-image: none; background-color: #333; border: 1px solid #666;
 }
 
+#defense-progress-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    margin: 15px 0;
+    overflow: hidden;
+}
+
+#defense-progress-bar {
+    height: 100%;
+    width: 0%; /* Inicia en 0 */
+    background: linear-gradient(90deg, #ff4d4d, #ff8c00);
+    /* La transición se aplicará desde JavaScript */
+}
+
+/* Opcional: una clase para resaltar cartas de defensa */
+.card-in-game.actionable-defense {
+    box-shadow: 0 0 15px 5px #00aaff; /* Resplandor azul de defensa */
+    cursor: pointer;
+}
+.card-in-game.actionable-defense:hover {
+    transform: scale(1.05);
+}
