@@ -16,10 +16,6 @@ let baseCardData = new Map();
 let currentDeck = [];
 let isAppReady = false;
 
-// [ELIMINADO] Variables del temporizador de defensa
-// let defenseTimerId = null;
-// const DEFENSE_WINDOW_MS = 4000;
-
 // --- SELECTORES DEL DOM (Declaración) ---
 let loginBtn, logoutBtn, userInfoDiv, userPic, userName,
     lobbyView, gameView, deckBuilderView, createGameBtn, joinGameInput, joinGameBtn,
@@ -27,7 +23,8 @@ let loginBtn, logoutBtn, userInfoDiv, userPic, userName,
     collectionCardCount, currentDeckList, deckCardCount, gameCodeModal, gameCodeDisplay,
     copyCodeBtn, gameStatus, gameActionsBar, endTurnBtn, cardActionModal, cardActionTitle,
     cardActionButtons, cardActionCancel, 
-    defenseActionsBar, skipDefenseBtn; // [MODIFICADO]
+    defenseActionsBar, skipDefenseBtn,
+    gameOverModal, winnerMessage, backToLobbyFromGameBtn;
 
 /**
  * Asigna los elementos del DOM a las variables después de que la página haya cargado.
@@ -62,21 +59,17 @@ function initializeSelectors() {
     cardActionTitle = document.getElementById('card-action-title');
     cardActionButtons = document.getElementById('card-action-buttons');
     cardActionCancel = document.getElementById('card-action-cancel');
-    
-    // [MODIFICADO] Selectores de defensa actualizados
     defenseActionsBar = document.getElementById('defense-actions-bar');
     skipDefenseBtn = document.getElementById('skip-defense-btn');
-    
-    // [ELIMINADO] Selectores del modal
-    // defenseTimerModal = document.getElementById('defense-timer-modal');
-    // defenseProgressBar = document.getElementById('defense-progress-bar');
-    // defenseAcceptBtn = document.getElementById('defense-accept-btn');
+    gameOverModal = document.getElementById('game-over-modal');
+    winnerMessage = document.getElementById('winner-message');
+    backToLobbyFromGameBtn = document.getElementById('back-to-lobby-from-game-btn');
 }
 
 
 // --- INICIALIZACIÓN DE FIREBASE ---
 function initialize() {
-    initializeSelectors(); // Asignar selectores primero
+    initializeSelectors();
     if (!window.firebase) { setTimeout(initialize, 100); return; }
     const auth = window.firebase.auth;
 
@@ -120,9 +113,14 @@ function initialize() {
     saveDeckBtn.addEventListener('click', saveDeck);
     clearDeckBtn.addEventListener('click', clearDeck);
     cardActionCancel.addEventListener('click', () => cardActionModal.classList.add('hidden'));
-
-    // [ELIMINADO] Listener para el botón de aceptar ataque
-    // if (defenseAcceptBtn) { ... }
+    backToLobbyFromGameBtn.addEventListener('click', () => {
+        if (currentGameListener) {
+            currentGameListener();
+            currentGameListener = null;
+        }
+        gameOverModal.classList.add('hidden');
+        showView('lobby');
+    });
 }
 
 function showView(viewId) {
@@ -293,10 +291,7 @@ function listenToGame(gameId) {
     });
 }
 
-// [ELIMINADO] Funciones startDefenseTimer y stopDefenseTimer
-// ...
-
-// --- ACTUALIZACIÓN DE LA INTERFAZ DE JUEGO (MODIFICADA) ---
+// --- ACTUALIZACIÓN DE LA INTERFAZ DE JUEGO ---
 function updateGameBoardUI(gameData) {
     const localPlayerKey = gameData.gameState.players.player1.uid === currentUser.uid ? 'player1' : 'player2';
     const opponentPlayerKey = localPlayerKey === 'player1' ? 'player2' : 'player1';
@@ -307,23 +302,17 @@ function updateGameBoardUI(gameData) {
     const isMyTurn = gameData.gameState.turn === currentUser.uid;
     const pendingAttack = gameData.gameState.pendingAttack;
 
-    // --- [NUEVA LÓGICA] Mostrar botón de NO DEFENDER ---
     const isBeingAttacked = pendingAttack && pendingAttack.attackerPlayerKey === opponentPlayerKey && !isMyTurn;
 
     if (isBeingAttacked) {
         defenseActionsBar.classList.remove('hidden');
         skipDefenseBtn.onclick = () => {
-            // Enviar una nueva acción para saltar la defensa
             sendGameAction({ type: 'SKIP_DEFENSE' }, gameData.id);
-            defenseActionsBar.classList.add('hidden'); // Ocultar inmediatamente
+            defenseActionsBar.classList.add('hidden');
         };
     } else {
         defenseActionsBar.classList.add('hidden');
     }
-    // --- Fin de la nueva lógica ---
-
-    // [ELIMINADO] Toda la lógica del defenseTimerModal
-    // if (defenseTimerModal) { ... }
 
     document.getElementById('local-player-name').textContent = localPlayerState.displayName;
     document.getElementById('local-player-score').textContent = localPlayerState.puntos;
@@ -367,10 +356,13 @@ function updateGameBoardUI(gameData) {
     };
 
     if (gameData.gameState.winner) {
-        gameStatus.textContent = `¡Ganador: ${gameData.gameState.winner}!`;
+        winnerMessage.textContent = `¡El ganador es ${gameData.gameState.winner}!`;
+        gameOverModal.classList.remove('hidden');
         gameActionsBar.classList.add('hidden');
-        defenseActionsBar.classList.add('hidden'); // Ocultar también si hay ganador
+        defenseActionsBar.classList.add('hidden');
+        gameStatus.classList.add('hidden');
     } else {
+        gameStatus.classList.remove('hidden');
         gameStatus.textContent = isMyTurn ? "¡Es tu turno!" : `Turno de ${opponentPlayerState.displayName}`;
         if (isBeingAttacked) {
              gameStatus.textContent = "¡Te están atacando! Elige una carta o pulsa 'NO DEFENDER'.";
@@ -378,7 +370,7 @@ function updateGameBoardUI(gameData) {
     }
 }
 
-// --- FUNCIÓN createGameCard (MODIFICADA) ---
+// --- FUNCIÓN createGameCard ---
 function createGameCard(card, instance, gameData, isVisible, isDefending = false) {
     const cardEl = document.createElement('div');
     cardEl.className = 'card-in-game';
@@ -408,19 +400,20 @@ function createGameCard(card, instance, gameData, isVisible, isDefending = false
         cardEl.classList.add('on-field');
         if (instance.tapped) cardEl.classList.add('tapped');
         
-        const hasAction = card.texto.match(/\(\d+\)/);
+        // --- [MODIFICADO] --- Regex actualizada para la nueva nomenclatura de ATACAR
+        const hasAction = card.texto.match(/[A-Z]+(?:\s*\d+)?\s*\(\d+\)/);
         const hasDefenderAction = card.texto.includes('DEFENDER');
 
-        if (isMyTurn && !instance.tapped && hasAction) {
+        if (isMyTurn && !instance.tapped && hasAction && !gameData.gameState.winner) {
             cardEl.classList.add('actionable');
             cardEl.onclick = () => showCardActions(card, instance, gameData.id, false);
-        } else if (isDefending && !instance.tapped && hasDefenderAction) {
+        } else if (isDefending && !instance.tapped && hasDefenderAction && !gameData.gameState.winner) {
             cardEl.classList.add('actionable-defense');
             cardEl.onclick = () => showCardActions(card, instance, gameData.id, true);
         }
     } else { // Carta en la mano
         const localPlayerKey = gameData.gameState.players.player1.uid === currentUser.uid ? 'player1' : 'player2';
-        if (isMyTurn && gameData.gameState.players[localPlayerKey].unidades >= card.coste) {
+        if (isMyTurn && gameData.gameState.players[localPlayerKey].unidades >= card.coste && !gameData.gameState.winner) {
             cardEl.classList.add('playable');
             cardEl.onclick = () => sendGameAction({ type: 'PLAY_CARD', cardId: card.id }, gameData.id);
         }
@@ -428,11 +421,13 @@ function createGameCard(card, instance, gameData, isVisible, isDefending = false
     return cardEl;
 }
 
-// --- FUNCIÓN showCardActions (MODIFICADA) ---
+// --- FUNCIÓN showCardActions ---
 function showCardActions(card, instance, gameId, isDefending) {
     cardActionTitle.textContent = `Acciones para ${card.nombre}`;
     cardActionButtons.innerHTML = '';
-    const actions = card.texto.match(/[A-Z]+\s*\(\d+\)/g) || [];
+    
+    // --- [MODIFICADO] --- Regex actualizada para encontrar todas las acciones, incluyendo el nuevo ATACAR
+    const actions = card.texto.match(/[A-Z]+(?:\s*\d+)?\s*\(\d+\)/g) || [];
     
     actions.forEach(actionText => {
         const ability = actionText.match(/[A-Z]+/)[0].toUpperCase();
@@ -446,7 +441,6 @@ function showCardActions(card, instance, gameId, isDefending) {
                 cardActionModal.classList.add('hidden');
                 
                 if (isDefending) {
-                    // [MODIFICADO] Ocultar la barra de "NO DEFENDER"
                     defenseActionsBar.classList.add('hidden');
                 }
             };
@@ -471,3 +465,4 @@ async function sendGameAction(action, gameId) {
 }
 
 document.addEventListener('DOMContentLoaded', initialize);
+

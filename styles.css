@@ -38,7 +38,7 @@ body.its-my-turn {
 #app-container {
     width: 100%;
     height: 100%; /* El contenedor principal ocupa toda la altura */
-    max-width: 1600px; /* Aumentamos un poco el max-width */
+      /* Aumentamos un poco el max-width */
     margin: 0 auto; /* Centramos el contenedor */
     background-color: var(--surface-color);
     border-radius: 15px;
@@ -65,7 +65,7 @@ body.its-my-turn {
 /* Estilos de Autenticación y Botones */
 .user-info-container { display: flex; align-items: center; gap: 15px; }
 .user-info-container img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary-text-color); }
-.btn-control { padding: 10px 20px; border-radius: 8px; border: none; font-size: 1em; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; color: white; }
+.btn-control { padding: 10px 20px; border-radius: 8px; border: none; font-size: 1em; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; color: rgb(0, 0, 0); }
 .btn-control:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
 .btn-primary { background-color: var(--primary-color); }
 .btn-ia { background-color: var(--ia-color); }
@@ -79,6 +79,7 @@ body.its-my-turn {
     min-height: 0; /* Necesario para que flex-grow funcione correctamente en algunos navegadores */
     display: flex; /* Hacemos que el contenido principal también sea un contenedor flex */
     flex-direction: column;
+    zoom: 0.8;
 }
 .view {
     animation: fadeIn 0.5s ease-in-out;
@@ -91,7 +92,9 @@ body.its-my-turn {
 #game-view { display: flex; flex-direction: column; /* height: 85vh; -> Eliminado */ }
 .deck-builder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .deck-builder-header > div { display: flex; gap: 10px; }
-.deck-builder-main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 70vh; }
+.deck-builder-main { 
+    
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 92%; }
 .card-collection-panel, .current-deck-panel {
     display: flex;
     flex-direction: column;
@@ -135,7 +138,7 @@ body.its-my-turn {
     background-color: rgba(0,0,0,0.2);
     border-radius: 8px;
     gap: 10px;
-    overflow-x: auto; /* Añadimos scroll horizontal por si hay demasiadas cartas */
+    overflow: visible; /* Permitimos que las cartas se salgan al hacer hover */
 }
 
 .game-status-bar { text-align: center; padding: 10px; font-size: 1.2em; font-weight: bold; background-color: #333; margin-top: 10px; border-radius: 8px; font-family: var(--font-title); }
@@ -169,11 +172,11 @@ body.its-my-turn {
 /* --- INTERACCIONES --- */
 
 /* Hover para el constructor */
-.deck-builder-card {
+.deck-builder-card { 
     cursor: pointer;
     width: 100%; /* La carta ocupa todo el espacio de la celda de la rejilla */
 }
-.deck-builder-card:hover {
+.deck-builder-card:hover { 
     transform: scale(1.05);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
 }
@@ -189,10 +192,11 @@ body.its-my-turn {
 }
 
 .card-in-game.playable { border: 2px solid var(--save-color); cursor: pointer; }
-#local-player-hand .card-in-game.playable:hover { transform: translateY(-20px) scale(1.1); z-index: 100; box-shadow: 0 0 20px var(--save-color); }
+#local-player-hand .card-in-game.playable:hover { 
+    transform: translateY(-20px) scale(1.4); z-index: 100; box-shadow: 0 0 20px var(--save-color); }
 
 .card-in-game.tapped { transform: rotate(90deg) scale(0.9); }
-.card-in-game.on-field:hover { transform: scale(1.1); z-index: 100; }
+.card-in-game.on-field:hover { transform: scale(1.4); z-index: 100; }
 .card-in-game.on-field.actionable { border: 2px solid gold; cursor: pointer; }
 
 

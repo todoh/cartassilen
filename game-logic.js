@@ -1,6 +1,6 @@
 // =================================================================
 // ARCHIVO: game-logic.js
-// VERSIÓN 4: Lógica de 'NO DEFENDER' (SKIP_DEFENSE) añadida.
+// VERSIÓN 5: Lógica de 'ATACAR' con nivel de puntos de juego.
 // Tipos de Carta: ACCION, ESTADO.
 // Habilidades: ACUMULAR, GANAR, ATACAR, DEFENDER.
 // =================================================================
@@ -65,12 +65,9 @@ export function performAction(currentState, playerId, action, cardData) {
         case 'ACTIVATE_ABILITY':
             newState = activateAbility(newState, playerKey, action.instanceId, action.action, cardData);
             break;
-        
-        // [NUEVO] Caso para manejar el "NO DEFENDER"
         case 'SKIP_DEFENSE':
             newState = skipDefense(newState, playerKey, cardData);
             break;
-
         case 'END_TURN':
             newState = endTurn(newState, playerKey, cardData);
             break;
@@ -86,7 +83,6 @@ export function performAction(currentState, playerId, action, cardData) {
         newState.winner = newState.players[opponentKey].displayName;
     }
 
-
     return newState;
 }
 
@@ -99,7 +95,7 @@ export function performAction(currentState, playerId, action, cardData) {
  * @returns {object} Nuevo estado del juego.
  */
 function playCardFromHand(state, playerKey, cardId, cardData) {
-    if (state.turn !== state.players[playerKey].uid) return state; // Solo se juega en tu turno
+    if (state.turn !== state.players[playerKey].uid) return state;
 
     const card = cardData.get(cardId);
     const player = state.players[playerKey];
@@ -124,18 +120,17 @@ function playCardFromHand(state, playerKey, cardId, cardData) {
                     break;
             }
         }
-    } else { // El tipo es 'ESTADO'
+    } else {
         const newInstance = {
             id: cardId,
             instanceId: `inst_${Date.now()}_${Math.random()}`,
-            tapped: true, // Las cartas entran giradas
+            tapped: true,
         };
         state.fields[playerKey].push(newInstance);
     }
 
     return state;
 }
-
 
 /**
  * Verifica si el oponente tiene cartas de defensa usables.
@@ -149,21 +144,20 @@ function hasUsableDefense(state, opponentKey, cardData) {
     const opponentField = state.fields[opponentKey];
 
     for (const instance of opponentField) {
-        if (instance.tapped) continue; // No se puede usar si está girada
+        if (instance.tapped) continue;
 
         const card = cardData.get(instance.id);
-        if (!card.texto.includes('DEFENDER')) continue; // No es defensora
+        if (!card.texto.includes('DEFENDER')) continue;
 
-        // Extraer el coste de DEFENDER
         const match = card.texto.match(/DEFENDER\s*\((\d+)\)/);
         if (match) {
             const defenseCost = parseInt(match[1]);
             if (opponent.unidades >= defenseCost) {
-                return true; // ¡Encontró una defensa usable!
+                return true;
             }
         }
     }
-    return false; // No se encontró ninguna
+    return false;
 }
 
 
@@ -183,19 +177,21 @@ function activateAbility(state, playerKey, instanceId, actionText, cardData) {
     const card = cardData.get(instance.id);
     const player = state.players[playerKey];
     
-    const match = actionText.match(/([A-Z]+)\s*\((\d+)\)/);
-    if (!match) return state;
+    // --- [MODIFICADO] --- Regex para soportar ATACAR con nivel y el resto de habilidades.
+    const attackMatch = actionText.match(/ATACAR\s*(\d+)\s*\((\d+)\)/);
+    const otherMatch = actionText.match(/([A-Z]+)\s*\((\d+)\)/);
     
-    const ability = match[1].toUpperCase();
-    const cost = parseInt(match[2]);
+    if (!attackMatch && !otherMatch) return state;
+    
+    const ability = (attackMatch) ? 'ATACAR' : otherMatch[1].toUpperCase();
+    const cost = parseInt(attackMatch ? attackMatch[2] : otherMatch[2]);
 
     if (player.unidades < cost) return state;
 
-    // Lógica específica para cada habilidad
     switch (ability) {
         case 'ACUMULAR':
         case 'GANAR':
-            if (state.turn !== player.uid) return state; // Estas solo en tu turno
+            if (state.turn !== player.uid) return state;
             player.unidades -= cost;
             instance.tapped = true;
             if (ability === 'ACUMULAR') player.unidades += card.poder;
@@ -203,26 +199,30 @@ function activateAbility(state, playerKey, instanceId, actionText, cardData) {
             break; 
 
         case 'ATACAR':
-            if (state.turn !== player.uid || state.pendingAttack) return state; // Solo en tu turno y si no hay otro ataque
+            if (state.turn !== player.uid || state.pendingAttack) return state;
             
-            player.unidades -= cost; // Paga el coste de atacar
-            instance.tapped = true; // Gira la carta atacante
+            const attackLevel = parseInt(attackMatch[1]); // --- [NUEVO] Nivel del ataque
+            
+            player.unidades -= cost;
+            instance.tapped = true;
 
             const opponentKey = playerKey === 'player1' ? 'player2' : 'player1';
             
             if (hasUsableDefense(state, opponentKey, cardData)) {
+                // --- [MODIFICADO] --- Almacenar el nivel del ataque en lugar del poder
                 state.pendingAttack = {
                     attackerPlayerKey: playerKey,
                     attackerInstanceId: instance.instanceId,
+                    attackLevel: attackLevel, 
                 };
             } else {
-                const attackerCard = cardData.get(instance.id);
-                player.puntos += attackerCard.poder;
+                // --- [MODIFICADO] --- Gana puntos igual al nivel del ataque, no al poder.
+                player.puntos += attackLevel;
             }
             break;
 
         case 'DEFENDER':
-            if (!state.pendingAttack || state.pendingAttack.attackerPlayerKey === playerKey) return state; // Solo si hay un ataque enemigo
+            if (!state.pendingAttack || state.pendingAttack.attackerPlayerKey === playerKey) return state;
             
             player.unidades -= cost;
             instance.tapped = true;
@@ -230,15 +230,14 @@ function activateAbility(state, playerKey, instanceId, actionText, cardData) {
             const oppKey = state.pendingAttack.attackerPlayerKey;
             const attackerInstance = state.fields[oppKey].find(c => c.instanceId === state.pendingAttack.attackerInstanceId);
             
-            if (!attackerInstance) { // El atacante ya no existe
+            if (!attackerInstance) {
                 state.pendingAttack = null;
                 return state;
             }
 
             const attackerCard = cardData.get(attackerInstance.id);
-            const defenderCard = card; // card ya está definido arriba
+            const defenderCard = card;
 
-            // Comparar poderes
             if (attackerCard.poder > defenderCard.poder) {
                 state.fields[playerKey] = state.fields[playerKey].filter(c => c.instanceId !== instance.instanceId);
             } else if (defenderCard.poder > attackerCard.poder) {
@@ -248,23 +247,20 @@ function activateAbility(state, playerKey, instanceId, actionText, cardData) {
                 state.fields[oppKey] = state.fields[oppKey].filter(c => c.instanceId !== attackerInstance.instanceId);
             }
             
-            state.pendingAttack = null; // El combate se resuelve
+            state.pendingAttack = null;
             break;
     }
     return state;
 }
 
 /**
- * [NUEVA FUNCIÓN] Resuelve un ataque pendiente cuando el defensor elige no bloquear.
+ * Resuelve un ataque pendiente cuando el defensor elige no bloquear.
  * @param {object} state Estado del juego.
- * @param {string} playerKey Clave del jugador que omite la defensa ('player1' o 'player2').
+ * @param {string} playerKey Clave del jugador que omite la defensa.
  * @param {Map} cardData Datos base de las cartas.
  * @returns {object} Nuevo estado del juego.
  */
 function skipDefense(state, playerKey, cardData) {
-    // Comprobaciones de seguridad:
-    // 1. Debe haber un ataque pendiente
-    // 2. El jugador que pulsa "NO DEFENDER" (playerKey) NO debe ser el atacante
     if (!state.pendingAttack || state.pendingAttack.attackerPlayerKey === playerKey) {
         return state; 
     }
@@ -273,12 +269,10 @@ function skipDefense(state, playerKey, cardData) {
     const attackerInstance = state.fields[attackerKey].find(c => c.instanceId === state.pendingAttack.attackerInstanceId);
     
     if (attackerInstance) {
-        // El atacante sigue en el campo, se resuelve el ataque
-        const attackerCard = cardData.get(attackerInstance.id);
-        state.players[attackerKey].puntos += attackerCard.poder;
+        // --- [MODIFICADO] --- Gana puntos por el nivel del ataque pendiente
+        state.players[attackerKey].puntos += state.pendingAttack.attackLevel;
     }
     
-    // Limpiar el ataque pendiente, ya que se ha resuelto
     state.pendingAttack = null;
 
     return state;
@@ -295,14 +289,11 @@ function skipDefense(state, playerKey, cardData) {
 function endTurn(state, playerKey, cardData) {
     if (state.turn !== state.players[playerKey].uid) return state;
 
-    // 1. Resolver ataque pendiente no defendido
-    // (Esto se ejecutará si el oponente PUDO defender pero eligió NO hacerlo
-    // Y ADEMÁS no pulsó el botón "SKIP_DEFENSE")
     if (state.pendingAttack && state.pendingAttack.attackerPlayerKey === playerKey) {
         const attackerInstance = state.fields[playerKey].find(c => c.instanceId === state.pendingAttack.attackerInstanceId);
         if (attackerInstance) {
-            const attackerCard = cardData.get(attackerInstance.id);
-            state.players[playerKey].puntos += attackerCard.poder;
+            // --- [MODIFICADO] --- Gana puntos por el nivel del ataque pendiente
+            state.players[playerKey].puntos += state.pendingAttack.attackLevel;
         }
         state.pendingAttack = null;
     }
@@ -310,15 +301,12 @@ function endTurn(state, playerKey, cardData) {
     const opponentKey = playerKey === 'player1' ? 'player2' : 'player1';
     state.turn = state.players[opponentKey].uid;
     
-    // 2. Preparar (destapar) las cartas del nuevo jugador
     state.fields[opponentKey].forEach(card => card.tapped = false);
 
-    // 3. Robar una carta
     if (state.decks[opponentKey].length > 0) {
         state.hands[opponentKey].push(state.decks[opponentKey].pop());
     }
     
-    // 4. El nuevo jugador gana 1 unidad al inicio de su turno.
     state.players[opponentKey].unidades += 1;
 
     return state;

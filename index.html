@@ -114,6 +114,14 @@
         </div>
     </div>
 
+    <div id="game-over-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Partida Finalizada</h3>
+            <p id="winner-message"></p>
+            <button id="back-to-lobby-from-game-btn" class="btn-control btn-primary">Volver al Lobby</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
