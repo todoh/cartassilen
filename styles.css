@@ -14,7 +14,20 @@
     --font-title: 'Cinzel', serif;
     --font-body: 'Roboto', sans-serif;
 }
-
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #333;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 /* Añadimos box-sizing para un modelo de caja más predecible */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -74,15 +87,15 @@ body.its-my-turn {
 
 /* Vistas y Constructor de Barajas */
 #main-content {
-    padding: 25px;
+     
     flex-grow: 1; /* Ocupa el espacio restante */
     min-height: 0; /* Necesario para que flex-grow funcione correctamente en algunos navegadores */
     display: flex; /* Hacemos que el contenido principal también sea un contenedor flex */
     flex-direction: column;
-    zoom: 0.8;
+    zoom: 1.0;
 }
 .view {
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 1.9s ease-in-out;
     flex-grow: 1; /* Las vistas deben crecer para ocupar el espacio de main-content */
     display: flex; /* Y también ser flex para controlar sus hijos */
     flex-direction: column;
@@ -90,25 +103,65 @@ body.its-my-turn {
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 #game-view { display: flex; flex-direction: column; /* height: 85vh; -> Eliminado */ }
-.deck-builder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.deck-builder-header {position: fixed;
+    top: 2%;
+ left: 350px;
+    right: 20%;
+    height: 5%;
+     display: flex;  align-items: center; margin-bottom: 20px; }
 .deck-builder-header > div { display: flex; gap: 10px; }
 .deck-builder-main { 
-    
-    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 92%; }
-.card-collection-panel, .current-deck-panel {
+    overflow: none;
+    display: grid;   height: 92%; }
+.current-deck-panel {
+    position: fixed;
+    top: 8%;
+    left: 65%;
+    right: 1%;
+    bottom: 2%;
     display: flex;
     flex-direction: column;
     background-color: #1e1e1e;
-    padding: 15px;
+    padding:10px;
     border-radius: 10px;
-    overflow-y: scroll;
+    overflow-y: scroll; overflow-x: none;
+    z-index: 10;
 }
+.lobby-controls {
+
+gap: 10px;
+position: fixed;
+    top: 2%;
+    left: 350px;
+    right: 10%;
+    height: 5%;
+     display: flex;
+
+
+
+}
+.card-collection-panel {
+     position: fixed;
+    top: 8%;
+    left: 1%; 
+    right: 35%;
+    bottom: 2%;
+    display: flex;
+    flex-direction: column; 
+    background-color: #1e1e1e;
+    padding:10px;
+    border-radius: 10px;
+    overflow-y: scroll;overflow-x: none;  z-index: 10;
+
+}
+ 
 .card-list {
+    margin: 35px;
     flex-grow: 1;
     padding: 0px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Reducimos un poco el minmax para más flexibilidad */
-    gap: 15px; /* Aumentamos el gap */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Reducimos un poco el minmax para más flexibilidad */
+    gap: 20px; /* Aumentamos el gap */
     align-content: flex-start;
 }
 
@@ -152,8 +205,8 @@ body.its-my-turn {
 /* --- ESTILO UNIFICADO DE CARTA --- */
 .card-in-game,
 .deck-builder-card {
-    /* width: 200px; -> Eliminado */
-    /* height: 320px; -> Eliminado */
+     
+    height: 350px;
     aspect-ratio: 5 / 7; /* Proporción estándar de carta */
     border: 1px solid #444;
     border-radius: 10px;
@@ -165,20 +218,21 @@ body.its-my-turn {
     color: #e0e0e0;
     position: relative;
     user-select: none;
-    transition: transform 0.2s, box-shadow 0.2s; /* Eliminamos height y width de la transición */
+    transition: transform 0.3s ease-in-out, box-shadow 0.4s ease-in-out; /* Hacemos la transición más suave y lenta */
     flex-shrink: 0; /* Evitamos que las cartas se deformen en contenedores flex */
 }
 
 /* --- INTERACCIONES --- */
 
 /* Hover para el constructor */
-.deck-builder-card { 
+.deck-builder-card { zoom: 0.7;
     cursor: pointer;
-    width: 100%; /* La carta ocupa todo el espacio de la celda de la rejilla */
+  /*  width: 100%; /* La carta ocupa todo el espacio de la celda de la rejilla */
 }
-.deck-builder-card:hover { 
-    transform: scale(1.05);
+.deck-builder-card:hover { zoom: 0.7;
+    transform: scale(1.45); z-index: 100;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+ 
 }
 
 /* Interacciones en el juego */
@@ -189,6 +243,7 @@ body.its-my-turn {
 .player-field .card-in-game {
     height: 95%; /* La altura se basa en el contenedor del campo */
     width: auto;
+    zoom: 0.5;
 }
 
 .card-in-game.playable { border: 2px solid var(--save-color); cursor: pointer; }
@@ -196,7 +251,7 @@ body.its-my-turn {
     transform: translateY(-20px) scale(1.4); z-index: 100; box-shadow: 0 0 20px var(--save-color); }
 
 .card-in-game.tapped { transform: rotate(90deg) scale(0.9); }
-.card-in-game.on-field:hover { transform: scale(1.4); z-index: 100; }
+.card-in-game.on-field:hover { transform: scale(2); z-index: 100; }
 .card-in-game.on-field.actionable { border: 2px solid gold; cursor: pointer; }
 
 
