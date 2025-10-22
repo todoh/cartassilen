@@ -40,19 +40,20 @@
             <div id="deck-builder-view" class="view hidden">
                 <div class="deck-builder-header">
                    
-                    <div>
+                    <div >                        
+                        <h3>🎴 (<span id="collection-card-count">0</span>)</h3>                       
+                        <h3>🎴(<span id="deck-card-count">0</span>/40)</h3>
                         <button id="back-to-lobby-btn" class="btn-control">Lobby</button>
-                        <button id="clear-deck-btn" class="btn-control btn-ia">Vaciar Baraja</button>
-                        <button id="save-deck-btn" class="btn-control btn-save">Guardar Baraja</button>
+                        <button id="clear-deck-btn" class="btn-control btn-ia">Vaciar</button>
+                        <button id="save-deck-btn" class="btn-control btn-save">💾</button>
                     </div>
                 </div>
                 <div class="deck-builder-main">
                     <div class="card-collection-panel">
-                        <h3>Colección de Cartas (<span id="collection-card-count">0</span>)</h3>
+
                         <div id="card-collection-list" class="card-list"></div>
                     </div>
                     <div class="current-deck-panel">
-                        <h3>Tu Baraja (<span id="deck-card-count">0</span>/40)</h3>
                         <div id="current-deck-list" class="card-list"></div>
                     </div>
                 </div>
