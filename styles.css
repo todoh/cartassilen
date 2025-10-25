@@ -128,6 +128,7 @@ body.its-my-turn {
     flex-direction: column;
     background-color: #eeeeee;
     padding:10px;
+    padding-right: 50px;
     border-radius: 10px;
     overflow-y: scroll; overflow-x: none;
     z-index: 10;
@@ -157,6 +158,8 @@ right: 10%;
     flex-direction: column; 
     background-color: #1e1e1e;
     padding:15px;
+        padding-right: 50px;
+
     border-radius: 10px;
     overflow-y: scroll;overflow-x: none;  z-index: 10;
 
@@ -182,28 +185,40 @@ right: 10%;
 .game-board { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; border: 2px solid var(--border-color); border-radius: 10px; background: radial-gradient(circle, #3a3a3a, #2a2a2a); }
 .player-zone { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; }
 .player-stats { display: flex; justify-content: space-around; align-items: center; background-color: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; font-family: var(--font-title); font-size: 1.1em; flex-shrink: 0; }
-.player-field { flex-grow: 1; background-color: rgba(0, 0, 0, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; min-height: 150px; }
+.player-field { flex-grow: 1; background-color: rgba(0, 0, 0, 0.2);
+ padding: 10px;   padding-left: 6%; padding-right: 6%; width: 100%;
+     border-radius: 8px; display: flex; align-items: center; justify-content: left; 
+     gap: 10px;  min-height: 150px; overflow: scroll; }
 
 /* Nueva Zona de la Mano */
 #local-player-hand {
-    /* height: 240px; -> Reemplazado por vh y min/max */
-    height: 33vh;
-    min-height: 240px;
-    max-height: 300px;
+     height: 33vh;
+   width: 100%;
     flex-shrink: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
     padding: 10px;
-    margin-top: 10px;
+ padding-left:6%;
+ padding-right: 6%;
+    margin-top: 10px;  
+    margin-left: 0%;
+    margin-bottom: 0; padding-bottom: 0px;
     background-color: rgba(0,0,0,0.2);
     border-radius: 8px;
     gap: 10px;
     overflow: visible; /* Permitimos que las cartas se salgan al hacer hover */
+    overflow-x: scroll;
+       overflow-y: scroll;
 }
 
-.game-status-bar { text-align: center; padding: 10px; font-size: 1.2em; font-weight: bold; background-color: #333; margin-top: 10px; border-radius: 8px; font-family: var(--font-title); }
-.game-actions-bar { text-align: center; margin-top: 10px; }
+.game-status-bar { 
+    width: 150px;
+       position: fixed; bottom: 0px; left: 5%;  
+    text-align: center; padding: 10px; font-size: 1.2em; font-weight: bold; background-color: #333; margin-top: 10px; border-radius: 8px; font-family: var(--font-title); }
+.game-actions-bar { 
+    position: fixed; bottom: 15px; right: 10%;  
+    text-align: center; margin-top: 10px; }
 #opponent-hand-counter {
     font-size: 0.9em;
     color: var(--secondary-text-color);
@@ -238,7 +253,7 @@ right: 10%;
   /*  width: 100%; /* La carta ocupa todo el espacio de la celda de la rejilla */
 }
 .deck-builder-card:hover { zoom: 0.7;
-    transform: scale(1.45); z-index: 100;
+    transform:  scale(1.45); z-index: 100;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
  
 }
@@ -256,10 +271,10 @@ right: 10%;
 
 .card-in-game.playable { border: 2px solid var(--save-color); cursor: pointer; }
 #local-player-hand .card-in-game.playable:hover { 
-    transform: translateY(-20px) scale(1.4); z-index: 100; box-shadow: 0 0 20px var(--save-color); }
+    transform: translateY(-90px) scale(1.7); z-index: 100; box-shadow: 0 0 20px var(--save-color); }
 
 .card-in-game.tapped { transform: rotate(90deg) scale(0.9); }
-.card-in-game.on-field:hover { transform: scale(2); z-index: 100; }
+.card-in-game.on-field:hover { transform: translateY(-170px) scale(2); z-index: 100; }
 .card-in-game.on-field.actionable { border: 2px solid gold; cursor: pointer; }
 
 
