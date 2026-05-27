@@ -1,154 +1,244 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CARTAS SILEN - Fase 3</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SILEN CARDS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="code/style.css">
 </head>
-<body>
+<body class="h-screen max-h-screen flex flex-col justify-between overflow-hidden bg-white select-none">
 
-    <div id="app-container">
-        <header class="main-header">
-            <h1 style="font-family: Arial, Helvetica, sans-serif;">CARTAS <span style="color: red;" >SILEN</span></h1>
-            <div id="auth-section">
-                <button id="login-btn" class="btn-control btn-primary">Iniciar Sesión con Google</button>
-                <div id="user-info" class="user-info-container hidden">
-                    <img id="user-pic" src="" alt="Foto de perfil">
-                    <span id="user-name"></span>
-                    <button id="logout-btn" class="btn-control">Cerrar Sesión</button>
-                </div>
-            </div>
-        </header>
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-        <main id="main-content">
-            <div id="lobby-view" class="view hidden">
-                 <div class="lobby-controls">
-                    <button id="deck-builder-btn" class="btn-control btn-primary">Baraja</button>
-                    <button id="create-game-btn" class="btn-control btn-ia">Crear Partida</button>
-                    <div class="join-game-section">
-                        <input type="text" id="join-game-input" placeholder="Pegar código de partida...">
-                        <button id="join-game-btn" class="btn-control btn-save">Unirse a Partida</button>
-                    </div>
-                </div>
-                 </div>
-
-            <div id="deck-builder-view" class="view hidden">
-                <div class="deck-builder-header">
-                   
-                    <div >                        
-                        <h3>🎴 (<span id="collection-card-count">0</span>)</h3>                       
-                        <h3>🎴(<span id="deck-card-count">0</span>/40)</h3>
-                        <button id="back-to-lobby-btn" class="btn-control">Lobby</button>
-                        <button id="clear-deck-btn" class="btn-control btn-ia">Vaciar</button>
-                        <button id="save-deck-btn" class="btn-control btn-save">💾</button>
-                    </div>
-                </div>
-                <div class="deck-builder-main">
-                    <div class="card-collection-panel">
-
-                        <div id="card-collection-list" class="card-list"></div>
-                    </div>
-                    <div class="current-deck-panel">
-                        <div id="current-deck-list" class="card-list"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="game-view" class="view hidden">
-                <div class="game-board">
-                    <div class="player-zone opponent-zone">
-                        <div class="player-stats">
-                            <div id="opponent-name">Oponente</div>
-                            <div>🏆 Puntos: <span id="opponent-score">0</span></div>
-                            <div>⚡ Unidades: <span id="opponent-units">0</span></div>
-                            <div id="opponent-hand-counter">Cartas en mano: 0</div>
-                        </div>
-                        <div class="player-field" id="opponent-field"></div>
-                        <div class="player-hand" id="opponent-hand" style="display: none;"></div> </div>
-                    
-                    <div class="player-zone local-player-zone">
-                        <div class="player-field" id="local-player-field"></div>
-                        <div class="player-stats">
-                            <div id="local-player-name">Tú</div>
-                            <div>🏆 Puntos: <span id="local-player-score">0</span></div>
-                            <div>⚡ Unidades: <span id="local-player-units">0</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                 <div class="player-hand" id="local-player-hand"></div>
-
-                 <div id="game-status" class="game-status-bar">Esperando jugadores...</div>
-                 
-                 <div id="game-actions" class="game-actions-bar hidden">
-                    <button id="end-turn-btn" class="btn-control">Terminar Turno</button>
-                 </div>
-                 
-                 <div id="defense-actions-bar" class="game-actions-bar hidden">
-                    <button id="skip-defense-btn" class="btn-control btn-ia">NO DEFENDER (Aceptar Ataque)</button>
-                 </div>
-            </div>
-        </main>
+  <header class="w-full py-3 px-4 sm:px-8 flex justify-between items-center border-b border-zinc-100 bg-white z-40 shrink-0">
+    <div class="flex items-baseline gap-4"></div>
+    <div class="flex gap-4 sm:gap-6 text-[10px] uppercase tracking-widest text-zinc-500 items-center">
+      <div class="border-r border-zinc-200 pr-4 sm:pr-6 font-mono font-bold text-zinc-900" id="silen-points-display">0 PS</div>
+      <button id="header-back-menu-btn" onclick="exitToMainMenu()" class="hidden hover:text-black hover:underline font-mono text-red-700 font-bold">Salir de Campaña</button>
+      <button id="header-editor-btn" onclick="openDeckEditor()" class="hidden hover:text-black hover:underline font-mono text-zinc-900 font-bold">Editor</button>
+      <button onclick="resetGame()" class="hover:text-black hover:underline">Reiniciar</button>
+      <button onclick="showRulesModal()" class="hover:text-black hover:underline">Reglas</button>
     </div>
+  </header>
 
-    <div id="game-code-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3>Partida Creada</h3>
-            <p>Comparte este código con tu oponente:</p>
-            <input type="text" id="game-code-display" readonly>
-            <button id="copy-code-btn" class="btn-control">Copiar Código</button>
-            <p class="info-text">Esperando a que se una un oponente...</p>
-        </div>
+  <div id="campaign-selection-container" class="flex-1 w-full max-w-4xl mx-auto px-4 py-8 flex flex-col justify-center overflow-y-auto font-mono">
+    <div class="w-full text-left mb-6 shrink-0 border-b border-zinc-100 pb-4">
+      <h2 class="text-xs uppercase tracking-widest text-zinc-400">Selector de Arquitecturas Activas</h2>
+      <p class="text-[10px] text-zinc-500 mt-1">Elige un entorno operacional simulado para desplegar tus nexos tácticos.</p>
     </div>
+    <div id="campaign-list-wrapper" class="w-full flex flex-col gap-4">
+      </div>
+  </div>
 
-    <div id="card-action-modal" class="modal-overlay hidden">
-        <div id="card-action-content" class="modal-content">
-            <h3 id="card-action-title"></h3>
-            <div id="card-action-buttons"></div>
-            <button id="card-action-cancel" class="btn-control">Cancelar</button>
-        </div>
+  <div id="map-container" class="hidden flex-1 w-full max-w-4xl mx-auto px-4 py-8 flex flex-col justify-center overflow-hidden">
+    <div class="w-full text-center mb-6 font-mono shrink-0">
+      <h2 class="text-xs uppercase tracking-widest text-zinc-400">Navegación Cuántica de Sectores</h2>
+      <p class="text-[9px] sm:text-[10px] text-zinc-500 mt-1">Desliza horizontalmente si es necesario y selecciona un nodo activo.</p>
     </div>
-
-    <div id="game-over-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3>Partida Finalizada</h3>
-            <p id="winner-message"></p>
-            <button id="back-to-lobby-from-game-btn" class="btn-control btn-primary">Volver al Lobby</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        
- // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAfK_AOq-Pc2bzgXEzIEZ1ESWvnhMJUvwI",
-  authDomain: "enraya-51670.firebaseapp.com",
-  databaseURL: "https://enraya-51670-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "enraya-51670",
-  storageBucket: "enraya-51670.firebasestorage.app",
-  messagingSenderId: "103343380727",
-  appId: "1:103343380727:web:b2fa02aee03c9506915bf2",
-  measurementId: "G-2G31LLJY1T"
-};
-
-        const app = initializeApp(firebaseConfig);
-        
-        window.firebase = {
-            app: app,
-            auth: getAuth(app),
-            db: getFirestore(app)
-        };
-    </script>
     
-    <script type="module" src="main.js"></script>
-    <script type="module" src="game-logic.js"></script>
+    <div class="w-full bg-zinc-50 border border-zinc-100 p-4 relative flex flex-1 items-stretch justify-start sm:justify-center overflow-x-auto overflow-y-hidden select-none snap-x mask-scroll-gradient" id="map-inner-scroll">
+      <div id="map-wrapper" class="flex flex-row gap-0 min-h-full py-4"></div>
+    </div>
+  </div>
+
+  <div id="editor-container" class="hidden flex-1 w-full max-w-6xl mx-auto px-4 py-4 flex flex-col min-h-0 overflow-hidden font-mono">
+    <div class="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4 shrink-0">
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-zinc-900">Configuración del Arsenal Activo</h2>
+        <p class="text-[9px] text-zinc-400 uppercase mt-0.5" id="editor-deck-count">Mazo: 0 / 25 Cartas</p>
+      </div>
+      <button onclick="closeDeckEditor()" class="px-4 py-2 bg-zinc-950 text-white text-[10px] uppercase tracking-widest hover:bg-zinc-800">Guardar y Salir</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0 overflow-hidden">
+      <div class="flex flex-col border border-zinc-100 bg-zinc-50/50 p-3 min-h-0">
+        <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2 shrink-0">Reserva de Datos (Tu Pool)</h3>
+        <div id="editor-pool-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
+      </div>
+
+      <div class="flex flex-col border border-zinc-100 bg-zinc-50/50 p-3 min-h-0">
+        <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2 shrink-0">Estructura del Mazo de Combate</h3>
+        <div id="editor-deck-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <main id="combat-container" class="hidden flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 grid grid-cols-1 lg:grid-cols-4 gap-3 overflow-hidden">
+    <div class="lg:col-span-1 flex flex-row lg:flex-col justify-between bg-zinc-50 p-1 sm:p-2 lg:p-3 gap-1 lg:gap-2 order-last lg:order-1 items-center lg:items-stretch shrink-0 w-full lg:h-auto">
+      <div class="flex flex-row lg:flex-col gap-2 lg:gap-3 flex-1 lg:flex-none justify-between lg:justify-start items-center lg:items-stretch w-full">
+        <div class="flex lg:flex-row justify-between items-baseline border-b border-zinc-100 lg:pb-1 w-full lg:block hidden">
+          <div class="text-[10px] sm:text-sm lg:text-xl font-light font-mono leading-none" id="turn-display">Turno 1</div>
+          <div class="text-[8px] text-zinc-400 font-mono uppercase mt-0.5" id="turn-phase">Fase de Preparación</div>
+        </div>
+
+        <div class="space-y-1 lg:space-y-2.5 flex-1 lg:flex-none w-full max-w-[140px] sm:max-w-[180px] lg:max-w-none">
+          <div class="py-0.5">
+            <div class="flex justify-between text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-wider text-zinc-500 mb-0.5 leading-none">
+              <span>IA</span>
+              <span id="ai-hp-txt" class="font-bold text-zinc-900">20/20 HP</span>
+            </div>
+            <div class="w-full h-[1px] sm:h-[2px] bg-zinc-200">
+              <div id="ai-hp-bar" class="h-full bg-zinc-900" style="width: 100%;"></div>
+            </div>
+          </div>
+          
+          <div class="py-0.5">
+            <div class="flex justify-between text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-wider text-zinc-500 mb-0.5 leading-none">
+              <span>Tú</span>
+              <span id="player-hp-txt" class="font-bold text-zinc-900">20/20 HP</span>
+            </div>
+            <div class="w-full h-[1px] sm:h-[2px] bg-zinc-200">
+              <div id="player-hp-bar" class="h-full bg-zinc-900" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-1 bg-white border border-zinc-100 flex flex-row lg:flex-col items-center justify-between lg:block min-w-[45px] sm:min-w-[70px] lg:min-w-0 gap-1 leading-none flex-1 lg:flex-none h-7 lg:h-auto">
+          <div class="text-[6px] sm:text-[7px] lg:text-[8px] uppercase tracking-widest text-zinc-400">NGR</div>
+          <div class="text-[9px] sm:text-xs lg:text-base font-bold text-zinc-900 font-mono lg:mt-0.5" id="player-energy">1 / 1</div>
+        </div>
+
+        <div class="hidden lg:grid grid-cols-2 gap-2 text-[10px]">
+          <div class="p-2 bg-white border border-zinc-100 text-center">
+            <div class="text-zinc-400 uppercase tracking-tighter text-[7px]">Retiro IA</div>
+            <div id="ai-graveyard-count" class="font-bold text-xs mt-0.5">0</div>
+          </div>
+          <div class="p-2 bg-white border border-zinc-100 cursor-pointer hover:bg-zinc-100 text-center" onclick="openGraveyardView()">
+            <div class="text-zinc-400 uppercase tracking-tighter text-[7px]">Tu Retiro</div>
+            <div id="player-graveyard-count" class="font-bold text-xs mt-0.5 hover:underline">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="w-full bg-white border border-zinc-100 py-1 hidden lg:block h-12">
+        <canvas id="combatCanvas" width="200" height="40" class="w-full h-full block"></canvas>
+      </div>
+
+      <div class="flex lg:flex-col gap-1 shrink-0">
+        <button onclick="toggleMobileLog()" class="px-1.5 lg:w-full py-1 bg-white text-zinc-900 border border-zinc-200 text-[8px] sm:text-[9px] uppercase tracking-widest hover:bg-zinc-50 transition-colors font-mono leading-none h-7 lg:h-auto">LOG</button>
+        <button id="end-turn-btn" onclick="endPlayerTurn()" class="px-2 lg:w-full py-1 lg:py-2 bg-zinc-950 text-white text-[8px] sm:text-[9px] uppercase tracking-widest hover:bg-zinc-800 transition-colors font-mono leading-none h-7 lg:h-auto">FIN</button>
+      </div>
+    </div>
+
+    <div class="lg:col-span-3 flex flex-col justify-between gap-1 overflow-hidden h-full order-first lg:order-2">
+      <div class="grid grid-cols-3 gap-1.5 sm:gap-4 flex-1 min-h-0">
+        <div id="ai-col-0" class="board-col bg-zinc-50 p-1 sm:p-2 flex flex-col justify-between relative min-h-0 overflow-hidden" ondragover="event.preventDefault()" ondrop="handleArenaDrop('ai', 0)" onclick="handleArenaClick('ai', 0)">
+          <div class="absolute top-0.5 left-1 text-[6px] sm:text-[8px] uppercase tracking-widest text-zinc-400 z-10">IZQ</div>
+          <div id="ai-field-0" class="text-[7px] sm:text-[9px] text-emerald-800 font-medium mt-1 z-10"></div>
+          <div id="ai-char-0" class="flex-1 flex flex-col justify-center items-center text-center h-full min-h-0"></div>
+          <div id="ai-equip-0" class="text-[6px] sm:text-[8px] text-zinc-500 flex gap-0.5 justify-center flex-wrap z-10"></div>
+        </div>
+        <div id="ai-col-1" class="board-col bg-zinc-50 p-1 sm:p-2 flex flex-col justify-between relative min-h-0 overflow-hidden" ondragover="event.preventDefault()" ondrop="handleArenaDrop('ai', 1)" onclick="handleArenaClick('ai', 1)">
+          <div class="absolute top-0.5 left-1 text-[6px] sm:text-[8px] uppercase tracking-widest text-zinc-400 z-10">CEN</div>
+          <div id="ai-field-1" class="text-[7px] sm:text-[9px] text-emerald-800 font-medium mt-1 z-10"></div>
+          <div id="ai-char-1" class="flex-1 flex flex-col justify-center items-center text-center h-full min-h-0"></div>
+          <div id="ai-equip-1" class="text-[6px] sm:text-[8px] text-zinc-500 flex gap-0.5 justify-center flex-wrap z-10"></div>
+        </div>
+        <div id="ai-col-2" class="board-col bg-zinc-50 p-1 sm:p-2 flex flex-col justify-between relative min-h-0 overflow-hidden" ondragover="event.preventDefault()" ondrop="handleArenaDrop('ai', 2)" onclick="handleArenaClick('ai', 2)">
+          <div class="absolute top-0.5 left-1 text-[6px] sm:text-[8px] uppercase tracking-widest text-zinc-400 z-10">DER</div>
+          <div id="ai-field-2" class="text-[7px] sm:text-[9px] text-emerald-800 font-medium mt-1 z-10"></div>
+          <div id="ai-char-2" class="flex-1 flex flex-col justify-center items-center text-center h-full min-h-0"></div>
+          <div id="ai-equip-2" class="text-[6px] sm:text-[8px] text-zinc-500 flex gap-0.5 justify-center flex-wrap z-10"></div>
+        </div>
+      </div>
+
+      <div class="py-0.5 flex justify-between items-center px-2 text-[6px] sm:text-[9px] text-zinc-300 uppercase tracking-widest font-mono shrink-0">
+        <span>C0</span><span class="h-[1px] bg-zinc-100 flex-1 mx-2"></span>
+        <span>C1</span><span class="h-[1px] bg-zinc-100 flex-1 mx-2"></span>
+        <span>C2</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-1.5 sm:gap-4 flex-1 min-h-0">
+        <div id="player-col-0" class="board-col bg-zinc-50 p-1 sm:p-2 flex flex-col justify-between relative min-h-0 overflow-hidden" ondragover="event.preventDefault()" ondrop="handleArenaDrop('player', 0)" onclick="handleArenaClick('player', 0)">
+          <div class="absolute top-0.5 left-1 text-[6px] sm:text-[8px] uppercase tracking-widest text-zinc-400 z-10">IZQ</div>
+          <div id="player-field-0" class="text-[7px] sm:text-[9px] text-emerald-800 font-medium mt-1 z-10"></div>
+          <div id="player-char-0" class="flex-1 flex flex-col justify-center items-center text-center h-full min-h-0"></div>
+          <div id="player-equip-0" class="text-[6px] sm:text-[8px] text-zinc-500 flex gap-0.5 justify-center flex-wrap z-10"></div>
+        </div>
+        <div id="player-col-1" class="board-col bg-zinc-50 p-1 sm:p-2 flex flex-col justify-between relative min-h-0 overflow-hidden" ondragover="event.preventDefault()" ondrop="handleArenaDrop('player', 1)" onclick="handleArenaClick('player', 1)">
+          <div class="absolute top-0.5 left-1 text-[6px] sm:text-[8px] uppercase tracking-widest text-zinc-400 z-10">CEN</div>
+          <div id="player-field-1" class="text-[7px] sm:text-[9px] text-emerald-800 font-medium mt-1 z-10"></div>
+          <div id="player-char-1" class="flex-1 flex flex-col justify-center items-center text-center h-full min-h-0"></div>
+          <div id="player-equip-1" class="text-[6px] sm:text-[8px] text-zinc-500 flex gap-0.5 justify-center flex-wrap z-10"></div>
+        </div>
+        <div id="player-col-2" class="board-col bg-zinc-50 p-1 sm:p-2 flex flex-col justify-between relative min-h-0 overflow-hidden" ondragover="event.preventDefault()" ondrop="handleArenaDrop('player', 2)" onclick="handleArenaClick('player', 2)">
+          <div class="absolute top-0.5 left-1 text-[6px] sm:text-[8px] uppercase tracking-widest text-zinc-400 z-10">DER</div>
+          <div id="player-field-2" class="text-[7px] sm:text-[9px] text-emerald-800 font-medium mt-1 z-10"></div>
+          <div id="player-char-2" class="flex-1 flex flex-col justify-center items-center text-center h-full min-h-0"></div>
+          <div id="player-equip-2" class="text-[6px] sm:text-[8px] text-zinc-500 flex gap-0.5 justify-center flex-wrap z-10"></div>
+        </div>
+      </div>
+
+      <div class="mt-1 shrink-0 flex flex-col justify-end h-[210px] sm:h-[240px] overflow-hidden">
+        <div class="flex justify-between items-baseline mb-0.5 px-1 shrink-0">
+          <h3 class="text-[8px] sm:text-[9px] uppercase tracking-widest text-zinc-400">Tu Mano</h3>
+          <span class="text-[8px] sm:text-[9px] text-zinc-400 font-mono" id="deck-count">Mazo: 0</span>
+        </div>
+        <div id="player-hand" class="flex gap-2 overflow-x-auto overflow-y-hidden pb-1 items-stretch h-full w-full auto-cols-max snap-x"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="action-panel" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-zinc-950 text-white px-4 py-3 flex flex-col sm:flex-row gap-3 items-center z-50 w-[92%] sm:w-auto text-center sm:text-left">
+    <div id="action-panel-text" class="text-[10px] tracking-wider"></div>
+    <div class="flex gap-3 w-full sm:w-auto justify-center">
+      <button id="action-btn-1" class="bg-white text-zinc-950 px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-zinc-100">Confirmar</button>
+      <button onclick="cancelSelection()" class="bg-transparent border border-white/20 text-white px-3 py-1.5 text-[10px] uppercase tracking-widest hover:bg-white hover:text-zinc-950">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="mobile-log-modal" class="hidden fixed inset-0 bg-zinc-950/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <div class="bg-white max-w-md w-full p-5 flex flex-col justify-between h-[60vh] border border-zinc-900">
+      <div class="flex justify-between items-center border-b border-zinc-100 pb-2 mb-3">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-zinc-900 font-mono">Bitácora de Sistema (LOG)</h2>
+        <button onclick="toggleMobileLog()" class="text-zinc-400 hover:text-black font-mono text-xs">✕</button>
+      </div>
+      <div id="combat-log" class="flex-1 overflow-y-auto text-[10px] font-mono text-zinc-600 space-y-1.5 pr-2 clean-scrollbar"></div>
+      <button onclick="toggleMobileLog()" class="w-full mt-4 py-2.5 bg-zinc-100 text-zinc-900 text-[10px] uppercase tracking-widest font-mono hover:bg-zinc-200">Regresar al Combate</button>
+    </div>
+  </div>
+
+  <div id="rules-modal" class="hidden fixed inset-0 bg-zinc-950/20 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <div class="bg-white max-w-2xl w-full p-6 flex flex-col justify-between max-h-[80vh] border border-zinc-100">
+      <div class="overflow-y-auto mb-6 pr-2">
+        <h2 class="text-sm font-bold uppercase tracking-widest mb-4 border-b border-zinc-100 pb-2">Manual Técnico Silen</h2>
+        <div class="space-y-4 text-xs text-zinc-600 leading-relaxed font-mono">
+          <p><strong>1. Energía Separada:</strong> La Energía Global sirve para invocar y equipar cartas. Los puntos de Energía de Personaje (EP) se autogeneran e impulsan las técnicas activas individuales.</p>
+          <p><strong>2. Regla Blitz:</strong> Si la velocidad (SPD) del atacante supera en 2 o más puntos la del defensor, el ataque neutraliza completamente el contraataque.</p>
+          <p><strong>3. Regla Retiro:</strong> Si un personaje equipado muere en su columna, los objetos de equipamiento asignados vuelven de manera íntegra a la mano del jugador originario.</p>
+          <p><strong>4. Estado Quemadura:</strong> Las quemaduras causan 2 de daño residual directo al inicio del turno y merman la capacidad de concentración, reduciendo la ganancia de EP de ese turno a la mitad.</p>
+        </div>
+      </div>
+      <button onclick="hideRulesModal()" class="w-full py-3 bg-zinc-950 text-white text-xs uppercase tracking-widest hover:bg-zinc-900">Cerrar</button>
+    </div>
+  </div>
+
+  <div id="graveyard-modal" class="hidden fixed inset-0 bg-zinc-950/20 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <div class="bg-white max-w-md w-full p-6 flex flex-col justify-between max-h-[75vh] border border-zinc-100">
+      <div class="overflow-y-auto mb-6">
+        <h2 class="text-xs font-bold uppercase tracking-widest mb-4">Zona de Retiro</h2>
+        <div id="graveyard-list" class="space-y-2"></div>
+      </div>
+      <button onclick="hideGraveyardModal()" class="w-full py-3 bg-zinc-100 text-zinc-900 text-[10px] uppercase tracking-widest hover:bg-zinc-200">Salir</button>
+    </div>
+  </div>
+
+  <footer class="w-full py-2 text-center text-[8px] tracking-widest text-zinc-400 border-t border-zinc-100 bg-white font-mono shrink-0">
+    SILEN CCG SYSTEM — AUTOMATED ARCHITECTURE &copy; 2026.
+  </footer>
+
+  <script src="code/cartas.js"></script>
+  <script src="code/state.js"></script>
+  <script src="code/logic.editor.js"></script>
+  <script src="code/ui.editor.js"></script>
+  
+  <script src="code/logic.map.js"></script>
+  <script src="code/logic.turn.js"></script>
+  <script src="code/logic.actions.js"></script>
+  <script src="code/logic.combat.js"></script>
+  <script src="code/logic.menu.js"></script>
+  <script src="code/ui.js"></script>
+  <script src="code/main.js"></script>
 </body>
 </html>
